@@ -102,9 +102,13 @@ def analizar_riesgos_con_ia(df_alertas):
     try:
         response = requests.post(url, headers=headers, json=payload)
         resultado = response.json()
+        # Si hay un error en la respuesta, lo imprimimos para saber qué es
+        if 'error' in resultado:
+            return f"⚠️ Error de la API: {resultado['error']['message']}"
+    
         return resultado['choices'][0]['message']['content']
     except Exception as e:
-        return f"Error al conectar con la IA: {e}"
+        return f"❌ Error de conexión o formato: {str(e)}"
 
 
 if __name__ == "__main__":
