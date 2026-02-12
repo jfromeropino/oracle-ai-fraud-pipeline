@@ -112,19 +112,13 @@ if __name__ == "__main__":
     inicio_total = time.time()
     
     # 1. EXTRACCIÓN
-    df_crudo = conectar_y_extraer()
+    df = conectar_y_extraer()
     
     # 2. VALIDACIÓN Y TRANSFORMACIÓN
-    if df_crudo is not None:
-        df_final, alertas = ejecutar_transformacion(df_crudo)
+    if df is not None:
+        df_final, alertas = ejecutar_transformacion(df)
         
-        if df_final is not None:
-            fin_total = time.time()
-            print(f"\n--- 📊 RESULTADOS FINALES ---")
-            print(f"✅ Total procesado: {len(df_final)} filas.")
-            print(f"🚨 Alertas críticas: {len(alertas)}")
-            print(f"⏱️ Tiempo total del pipeline: {round(fin_total - inicio_total, 2)} segundos.")
-            
+        if df_final is not None:            
             # Mostrar las primeras 5 alertas para verificar
             if len(alertas) > 0:
                 print("\n🔥 Muestra de Alertas de Alto Riesgo:")
@@ -137,5 +131,11 @@ if __name__ == "__main__":
             # Guardar las alertas en formato profesional de Big Data
             alertas.write_parquet("alertas_fraude_criticas.parquet")
             print("💾 Alertas guardadas exitosamente en 'alertas_fraude_criticas.parquet'")
+
+            fin_total = time.time()
+            print(f"\n--- 📊 RESULTADOS FINALES ---")
+            print(f"✅ Total procesado: {len(df_final)} filas.")
+            print(f"🚨 Alertas críticas: {len(alertas)}")
+            print(f"⏱️ Tiempo total del pipeline: {round(fin_total - inicio_total, 2)} segundos.")
     else:
         print("🛑 El pipeline se detuvo porque no se pudieron obtener datos de Oracle.")
