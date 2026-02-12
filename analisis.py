@@ -86,7 +86,7 @@ def analizar_riesgos_con_ia(df_alertas):
     
     prompt = f"""
     Como experto en seguridad bancaria, analiza estas transacciones marcadas como FRAUDE con montos altos:
-    {json.dumps(muestras, indent=2)}
+    {json.dumps(muestras, indent=2)} 
     
     Dime:
     1. ¿Qué patrones de riesgo detectas en los comentarios?
