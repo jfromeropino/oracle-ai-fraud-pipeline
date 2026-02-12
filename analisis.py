@@ -11,7 +11,8 @@ from dotenv import load_dotenv
 db_config = {
     "user": "DATAE",
     "password": "datae", 
-    "dsn": "localhost:1521/XEPDB1" 
+  #  "dsn": "localhost:1521/XEPDB1" 
+    "dsn": "host.docker.internal:1521/XEPDB1" 
 }
 
 def conectar_y_extraer():
