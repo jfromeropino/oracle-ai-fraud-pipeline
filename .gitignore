@@ -2,9 +2,9 @@
 venv/
 __pycache__/
 
-# Datos (No queremos subir 500k filas a GitHub)
+# Datos 
 *.parquet
 *.csv
 
-# Secretos (¡Nunca subas tus claves!)
+# Secretos 
 .env

@@ -5,6 +5,8 @@ import sys
 import polars as pl
 import requests
 import json
+import os
+from dotenv import load_dotenv    
 
 db_config = {
     "user": "DATAE",
@@ -67,6 +69,9 @@ def ejecutar_transformacion(df_pandas):
     return df_resultado, alertas
 
 def analizar_riesgos_con_ia(df_alertas):
+    load_dotenv() 
+    api_key = os.getenv("DEEPSEEK_API_KEY")
+    
     print("\n🤖 Enviando muestras de riesgo al Agente de IA...")
     
     # Tomamos una muestra representativa de las alertas para no saturar el prompt
@@ -76,7 +81,7 @@ def analizar_riesgos_con_ia(df_alertas):
     # Preparamos el contexto para DeepSeek (OpenRouter)
     url = "https://openrouter.ai/api/v1/chat/completions"
     headers = {
-        "Authorization": "Bearer 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", # Tu clave
+        "Authorization": f"Bearer {api_key}", # Tu clave
         "Content-Type": "application/json"
     }
     
