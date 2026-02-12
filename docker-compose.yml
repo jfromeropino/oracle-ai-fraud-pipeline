@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  pipeline-ia:
+    build: .
+    container_name: oracle_ai_container
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    # Esto permite que el contenedor hable con el Oracle que tienes en tu Windows real
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
