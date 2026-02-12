@@ -11,49 +11,49 @@ from dotenv import load_dotenv
 db_config = {
     "user": "DATAE",
     "password": "datae", 
-    "dsn": "localhost:1521/XEPDB1" # Asegúrate que sea XEPDB1 o xe según tu config
+    "dsn": "localhost:1521/XEPDB1" 
 }
 
 def conectar_y_extraer():
-    conn = None # Inicializamos para asegurar el cierre
+    conn = None 
     try:
         conn = oracledb.connect(
             user=db_config["user"],
             password=db_config["password"],
             dsn=db_config["dsn"]
         )
-        print("✅ Conexión establecida con Oracle 21c XE.")
+        print("Conexión establecida con BD Oracle 21c XE.")
 
         sql = "SELECT * FROM DATAE.TRANSACCIONES"
         tamanio_lote = 100000
         lista_dataframes = []
         
-        print(f"🚀 Extrayendo datos en lotes de {tamanio_lote}...")
+        print(f"Extrayendo datos en lotes de {tamanio_lote}...")
 
         for i, chunk in enumerate(pd.read_sql(sql, conn, chunksize=tamanio_lote)):
             lista_dataframes.append(chunk)
-            print(f"📦 Lote {i+1} procesado ({len(chunk)} filas)...")
+            print(f" Lote {i+1} procesado ({len(chunk)} filas)...")
 
         df_final = pd.concat(lista_dataframes, ignore_index=True)
         return df_final
 
     except Exception as e:
-        print(f"❌ Error durante la extracción: {str(e)}")
+        print(f"Error durante la extracción: {str(e)}")
         return None
     finally:
         if conn:
             conn.close()
-            print("🔒 Conexión a Oracle cerrada.")
+            print("Conexión a BD cerrada.")
 
 def ejecutar_transformacion(df_pandas):
     if df_pandas is None or df_pandas.empty:
         return None, None      
     
-    print("\n--- ⚡ Iniciando Transformación con Polars ---")
-    # 1. Convertir de Pandas a Polars (Cero copia)
+    print("\n--- Iniciando Transformación con Polars ---")
+    # Conversión de Pandas a Polars
     df = pl.from_pandas(df_pandas)
 
-    # 2. Pipeline de Transformación
+    # Pipeline de Transformación
     df_resultado = df.with_columns([
         pl.col("COMENTARIO").str.to_lowercase().str.strip_chars().alias("COMENTARIO_LIMPIO"),
         (pl.col("MONTO") * 0.19).alias("IMPUESTO_IVA"),
@@ -63,7 +63,7 @@ def ejecutar_transformacion(df_pandas):
         .alias("CATEGORIA_RIESGO")
     ])
 
-    # 3. Filtrar alertas
+    # Filtrar alertas
     alertas = df_resultado.filter(pl.col("CATEGORIA_RIESGO") == "ALTO RIESGO")
     
     return df_resultado, alertas
@@ -72,16 +72,15 @@ def analizar_riesgos_con_ia(df_alertas):
     load_dotenv() 
     api_key = os.getenv("DEEPSEEK_API_KEY")
     
-    print("\n🤖 Enviando muestras de riesgo al Agente de IA...")
+    print("\n Enviando muestras de riesgo (10) al Agente de IA...")
     
-    # Tomamos una muestra representativa de las alertas para no saturar el prompt
-    # Convertimos las primeras 10 alertas a una lista de diccionarios
+    # Convertir las primeras 10 alertas a una lista de diccionarios
     muestras = df_alertas.head(10).select(["ID_TRANSACCION", "MONTO", "COMENTARIO_LIMPIO"]).to_dicts()
     
-    # Preparamos el contexto para DeepSeek (OpenRouter)
+    # Configuración IA DeepSeek (OpenRouter)
     url = "https://openrouter.ai/api/v1/chat/completions"
     headers = {
-        "Authorization": f"Bearer {api_key}", # Tu clave
+        "Authorization": f"Bearer {api_key}", 
         "Content-Type": "application/json"
     }
     
@@ -119,23 +118,22 @@ if __name__ == "__main__":
         df_final, alertas = ejecutar_transformacion(df)
         
         if df_final is not None:            
-            # Mostrar las primeras 5 alertas para verificar
             if len(alertas) > 0:
-                print("\n🔥 Muestra de Alertas de Alto Riesgo:")
+                print("\n Alertas de Alto Riesgo:")
                 print(alertas.select(["ID_TRANSACCION", "MONTO", "COMENTARIO_LIMPIO"]).head(10))
 
                 respia = analizar_riesgos_con_ia(alertas)
-                print("\n🤖 Análisis de IA:")
-                print(respia)
+                
             
-            # Guardar las alertas en formato profesional de Big Data
+            # Almacenamiento de alertas en parquet
             alertas.write_parquet("alertas_fraude_criticas.parquet")
-            print("💾 Alertas guardadas exitosamente en 'alertas_fraude_criticas.parquet'")
-
+            print("Alertas guardadas exitosamente en 'alertas_fraude_criticas.parquet'")
+            
+            print(f" Total procesado: {len(df_final)} filas.")
+            print(f" Alertas críticas: {len(alertas)}")
+            print("\n Análisis de IA (DeepSeek):")
+            print(respia)
             fin_total = time.time()
-            print(f"\n--- 📊 RESULTADOS FINALES ---")
-            print(f"✅ Total procesado: {len(df_final)} filas.")
-            print(f"🚨 Alertas críticas: {len(alertas)}")
-            print(f"⏱️ Tiempo total del pipeline: {round(fin_total - inicio_total, 2)} segundos.")
+            print(f" Tiempo total del pipeline: {round(fin_total - inicio_total, 2)} segundos.")
     else:
-        print("🛑 El pipeline se detuvo porque no se pudieron obtener datos de Oracle.")
+        print("El pipeline se detuvo porque no se pudieron obtener datos de la BD.")
